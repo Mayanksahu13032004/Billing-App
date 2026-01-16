@@ -144,7 +144,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Toaster position="top-center" reverseOrder={false} />
-      <Navbar />
+      
 
       <main className="max-w-7xl mx-auto p-4 sm:p-8">
         <header className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
