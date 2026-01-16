@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 export default async function HomePage() {
   // check auth from server
-  const res = await fetch("http://localhost:3000/api/auth/me", {
+  const res = await fetch("api/auth/me", {
     credentials: "include",
     cache: "no-store",
   });
