@@ -10,7 +10,7 @@ export default async function generatePDF(bill) {
   let y = height - 50;
 
   /* ================= HEADER ================= */
-  page.drawText("GURUKRIPA ENGINEERING", {
+  page.drawText("Bill Invoice", {
     x: 150,
     y,
     size: 18,
