@@ -1,8 +1,8 @@
 export const runtime = "nodejs"; // ✅ REQUIRED
 
-import { connectDB } from "../../../../../../lib/db";
-import Bill from "../../../../../../models/Bill";
-import generatePDF from "../../../../../../lib/generatePDF";
+import { connectDB } from "@/lib/db";
+import Bill from "@/models/Bill";
+import generatePDF from "@/lib/generatePDF";
 import { NextResponse } from "next/server";
 
 

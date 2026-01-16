@@ -1,7 +1,7 @@
-import { connectDB } from "../../../../lib/db";
-import Bill from "../../../../models/Bill";
-import { verifyToken } from "../../../../lib/auth";
-import toWords from "../../../../lib/numberToWords";
+import { connectDB } from "@/lib/db";
+import Bill from "@/models/Bill";
+import { verifyToken } from "@/lib/auth";
+import toWords from "@/lib/numberToWords";
 import { NextResponse } from "next/server";
 // import { middleware } from "../../../../middleware";
 export async function POST(req) {

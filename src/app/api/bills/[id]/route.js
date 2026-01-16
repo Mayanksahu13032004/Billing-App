@@ -1,5 +1,5 @@
-import { connectDB } from "../../../../../lib/db";
-import Bill from "../../../../../models/Bill";
+import { connectDB } from "@/lib/db";
+import Bill from "@/models/Bill";
 
 import { NextResponse } from "next/server";
 

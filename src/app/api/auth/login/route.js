@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { ADMIN } from "@/lib/admin";
-import { connectDB } from "../../../../../lib/db";
-import User from "../../../../../models/User";
+import { connectDB } from "@/lib/db";
+import User from "@/models/User";
 
 export async function POST(req) {
     // await connectDB();

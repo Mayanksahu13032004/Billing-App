@@ -1,6 +1,6 @@
-import { connectDB } from "../../../../../lib/db";
-import User from "../../../../../models/User";
-import { verifyToken } from "../../../../../lib/auth";
+import { connectDB } from "@/lib/db";
+import User from "@/models/User";
+import { verifyToken } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 export async function GET(req) {
