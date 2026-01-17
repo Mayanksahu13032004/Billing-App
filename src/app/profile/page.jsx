@@ -16,7 +16,7 @@ export default function ProfilePage() {
     businessType: "Proprietor",
     gstNumber: "",
     panNumber: "",
-    logoUrl: "", // Added to store existing logo path
+    logo: "", // Added to store existing logo path
     address: { line1: "", city: "", state: "", pincode: "", country: "India" },
     contact: { phone: "", email: "", website: "" },
     bank: { bankName: "", accountNumber: "", ifsc: "" },
@@ -30,7 +30,7 @@ export default function ProfilePage() {
       .then((data) => {
         if (data) {
           setProfile((prev) => ({ ...prev, ...data }));
-          if (data.logoUrl) setLogoPreview(data.logoUrl);
+          if (data.logo) setLogoPreview(data.logo);
         }
         setLoading(false);
       })
@@ -58,35 +58,46 @@ export default function ProfilePage() {
     }
   };
 
-  const saveProfile = async () => {
-    const toastId = toast.loading("Updating business profile...");
-    try {
-      const formData = new FormData();
-      Object.entries(profile).forEach(([key, value]) => {
-        if (typeof value === "object") {
-          formData.append(key, JSON.stringify(value));
-        } else {
-          formData.append(key, value);
-        }
-      });
+const saveProfile = async () => {
+  const toastId = toast.loading("Updating business profile...");
+  try {
+    const formData = new FormData();
 
-      if (logoFile) {
-        formData.append("logo", logoFile);
+    Object.entries(profile).forEach(([key, value]) => {
+      if (key === "logo") return; // 🔥 CRITICAL FIX
+
+      if (typeof value === "object") {
+        formData.append(key, JSON.stringify(value));
+      } else {
+        formData.append(key, value);
       }
+    });
 
-      const res = await fetch("/api/profile", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error();
-
-      toast.success("Profile updated successfully!", { id: toastId });
-      setIsEditing(false);
-    } catch (err) {
-      toast.error("Failed to save profile", { id: toastId });
+    if (logoFile) {
+      formData.append("logo", logoFile);
     }
-  };
+
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error();
+
+    const updatedProfile = await res.json();
+
+    // 🔥 FORCE UI REFRESH
+    setProfile(updatedProfile);
+    setLogoPreview(updatedProfile.logo || null);
+    setLogoFile(null);
+    setIsEditing(false);
+
+    toast.success("Profile updated successfully!", { id: toastId });
+  } catch (err) {
+    toast.error("Failed to save profile", { id: toastId });
+  }
+};
+
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
