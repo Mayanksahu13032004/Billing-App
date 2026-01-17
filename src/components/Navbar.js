@@ -38,9 +38,11 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Dashboard", path: "/dashboard" },
-    { name: "All Bills", path: "/bills" },
+    
     { name: "Create Bill", path: "/bills/create" },
+    { name: "All Bills", path: "/bills" },
     { name: "Reports", path: "/reports" },
+    { name: "Profile", path: "/profile" },
   ];
 
   return (

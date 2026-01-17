@@ -2,123 +2,177 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 export default async function generatePDF(bill) {
   const pdfDoc = await PDFDocument.create();
+
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   const page = pdfDoc.addPage([595, 842]); // A4
   const { width, height } = page.getSize();
 
-  let y = height - 50;
+  const business = bill.business || {};
+  const address = business.address || {};
+  const contact = business.contact || {};
 
-  /* ================= HEADER ================= */
-  page.drawText("Bill Invoice", {
-    x: 150,
-    y,
-    size: 18,
-    font,
+  let y;
+
+  /* ================= HEADER BAR ================= */
+  page.drawRectangle({
+    x: 0,
+    y: height - 95,
+    width,
+    height: 95,
+    color: rgb(0.12, 0.18, 0.35), // Dark blue
   });
 
-  y -= 40;
-  page.drawText(`Bill No: ${bill.billNo}`, { x: 50, y, size: 12, font });
-  page.drawText(`Date: ${new Date(bill.date).toDateString()}`, {
-    x: 400,
-    y,
-    size: 12,
-    font,
+  page.drawText(business.businessName || "Business Name", {
+    x: 40,
+    y: height - 45,
+    size: 20,
+    font: boldFont,
+    color: rgb(1, 1, 1),
   });
 
-  y -= 20;
-  page.drawText(`Customer: ${bill.customerName}`, {
+  page.drawText(
+    `${address.line1 || ""}, ${address.city || ""}, ${address.state || ""} - ${address.pincode || ""}`,
+    {
+      x: 40,
+      y: height - 65,
+      size: 10,
+      font,
+      color: rgb(1, 1, 1),
+    }
+  );
+
+  page.drawText(
+    `GST No: ${business.gstNumber || "N/A"}  |  Phone: ${contact.phone || "-"}`,
+    {
+      x: 40,
+      y: height - 80,
+      size: 10,
+      font,
+      color: rgb(1, 1, 1),
+    }
+  );
+
+  page.drawText("TAX INVOICE", {
+    x: width - 160,
+    y: height - 55,
+    size: 16,
+    font: boldFont,
+    color: rgb(1, 1, 1),
+  });
+
+  y = height - 125;
+
+  /* ================= BILL INFO ================= */
+  page.drawRectangle({
+    x: 40,
+    y: y - 40,
+    width: width - 80,
+    height: 40,
+    color: rgb(0.95, 0.95, 0.95),
+  });
+
+  page.drawText(`Bill No: ${bill.billNo}`, {
     x: 50,
-    y,
-    size: 12,
-    font,
+    y: y - 26,
+    size: 11,
+    font: boldFont,
   });
 
-  y -= 30;
+  page.drawText(
+    `Date: ${new Date(bill.date).toDateString()}`,
+    {
+      x: width - 200,
+      y: y - 26,
+      size: 11,
+      font: boldFont,
+    }
+  );
 
-  /* ================= TABLE CONFIG ================= */
-  const tableTop = y;
-  const rowHeight = 25;
+  y -= 60;
 
+  page.drawText(`Customer Name: ${bill.customerName}`, {
+    x: 40,
+    y,
+    size: 12,
+    font: boldFont,
+  });
+
+  y -= 25;
+
+  /* ================= TABLE ================= */
   const colX = {
     sno: 50,
-    particular: 90,
-    qty: 300,
-    rate: 360,
-    amount: 440,
+    particular: 100,
+    qty: 320,
+    rate: 380,
+    amount: 460,
   };
 
-  /* ================= TABLE HEADER ================= */
+  const rowHeight = 28;
+
   page.drawRectangle({
-    x: 45,
-    y: tableTop,
-    width: 500,
+    x: 40,
+    y: y - rowHeight,
+    width: width - 80,
     height: rowHeight,
-    color: rgb(0.9, 0.9, 0.9),
-    borderColor: rgb(0, 0, 0),
-    borderWidth: 1,
+    color: rgb(0.85, 0.88, 0.95),
   });
 
-  page.drawText("S.No", { x: colX.sno, y: tableTop + 8, size: 11, font });
-  page.drawText("Particular", {
-    x: colX.particular,
-    y: tableTop + 8,
-    size: 11,
-    font,
-  });
-  page.drawText("Qty", { x: colX.qty, y: tableTop + 8, size: 11, font });
-  page.drawText("Rate", { x: colX.rate, y: tableTop + 8, size: 11, font });
-  page.drawText("Amount", {
-    x: colX.amount,
-    y: tableTop + 8,
-    size: 11,
-    font,
+  ["S.No", "Particular", "Qty", "Rate", "Amount"].forEach((t, i) => {
+    const keys = ["sno", "particular", "qty", "rate", "amount"];
+    page.drawText(t, {
+      x: colX[keys[i]],
+      y: y - 20,
+      size: 11,
+      font: boldFont,
+    });
   });
 
-  y = tableTop - rowHeight;
+  y -= rowHeight;
 
-  /* ================= TABLE ROWS ================= */
   bill.items.forEach((item, index) => {
     page.drawRectangle({
-      x: 45,
-      y,
-      width: 500,
+      x: 40,
+      y: y - rowHeight,
+      width: width - 80,
       height: rowHeight,
-      borderColor: rgb(0, 0, 0),
       borderWidth: 1,
+      borderColor: rgb(0.85, 0.85, 0.85),
     });
 
     page.drawText(String(index + 1), {
       x: colX.sno,
-      y: y + 8,
+      y: y - 20,
       size: 11,
       font,
     });
 
     page.drawText(item.particular, {
       x: colX.particular,
-      y: y + 8,
+      y: y - 20,
       size: 11,
       font,
     });
 
     page.drawText(String(item.qty), {
       x: colX.qty,
-      y: y + 8,
+      y: y - 20,
       size: 11,
       font,
     });
 
     page.drawText(String(item.rate), {
       x: colX.rate,
-      y: y + 8,
+      y: y - 20,
       size: 11,
       font,
     });
 
     page.drawText(String(item.amount), {
       x: colX.amount,
-      y: y + 8,
+      y: y - 20,
       size: 11,
       font,
     });
@@ -126,21 +180,39 @@ export default async function generatePDF(bill) {
     y -= rowHeight;
   });
 
-  /* ================= TOTAL ================= */
-  y -= 20;
+  y -= 30;
 
+  /* ================= TOTAL ================= */
   page.drawText(`Grand Total: Rs. ${bill.grandTotal}`, {
-    x: 350,
+    x: width - 260,
     y,
-    size: 13,
-    font,
+    size: 14,
+    font: boldFont,
   });
 
   y -= 20;
+
   page.drawText(`Amount in Words: ${bill.amountInWords}`, {
-    x: 50,
+    x: 40,
     y,
-    size: 11,
+    size: 10,
+    font,
+  });
+
+  /* ================= FOOTER ================= */
+  y -= 50;
+
+  page.drawText(`Generated By: ${bill.username || "System"}`, {
+    x: 40,
+    y,
+    size: 10,
+    font,
+  });
+
+  page.drawText("Authorized Signature", {
+    x: width - 200,
+    y,
+    size: 10,
     font,
   });
 
