@@ -11,6 +11,7 @@ const BusinessProfileSchema = new mongoose.Schema(
 
     businessName: String,
     ownerName: String,
+    logo:String,
     businessType: {
       type: String,
       enum: ["Proprietor", "Partnership", "Private Limited", "LLP"],

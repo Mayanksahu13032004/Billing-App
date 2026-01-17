@@ -7,12 +7,16 @@ import toast, { Toaster } from "react-hot-toast";
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null); // For local instant display
+
   const [profile, setProfile] = useState({
     businessName: "",
     ownerName: "",
     businessType: "Proprietor",
     gstNumber: "",
     panNumber: "",
+    logoUrl: "", // Added to store existing logo path
     address: { line1: "", city: "", state: "", pincode: "", country: "India" },
     contact: { phone: "", email: "", website: "" },
     bank: { bankName: "", accountNumber: "", ifsc: "" },
@@ -24,11 +28,22 @@ export default function ProfilePage() {
     fetch("/api/profile")
       .then((res) => res.json())
       .then((data) => {
-        if (data) setProfile((prev) => ({ ...prev, ...data }));
+        if (data) {
+          setProfile((prev) => ({ ...prev, ...data }));
+          if (data.logoUrl) setLogoPreview(data.logoUrl);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file)); // Show the image immediately
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,14 +61,28 @@ export default function ProfilePage() {
   const saveProfile = async () => {
     const toastId = toast.loading("Updating business profile...");
     try {
+      const formData = new FormData();
+      Object.entries(profile).forEach(([key, value]) => {
+        if (typeof value === "object") {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value);
+        }
+      });
+
+      if (logoFile) {
+        formData.append("logo", logoFile);
+      }
+
       const res = await fetch("/api/profile", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
+        body: formData,
       });
+
       if (!res.ok) throw new Error();
+
       toast.success("Profile updated successfully!", { id: toastId });
-      setIsEditing(false); // Switch back to view mode
+      setIsEditing(false);
     } catch (err) {
       toast.error("Failed to save profile", { id: toastId });
     }
@@ -72,58 +101,72 @@ export default function ProfilePage() {
         <Navbar />
 
         <main className="max-w-5xl mx-auto p-4 sm:p-8">
-          {/* Header Card */}
-        {/* Header Card - Updated to Very Dark */}
-{/* Optimized Compact Header - Slate-950 */}
-<div className="relative bg-slate-950 rounded-t-3xl p-6 sm:px-10 sm:py-8 overflow-hidden shadow-2xl border-b border-white/5">
-  {/* Subtle Background Watermark */}
-  <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-    <svg className="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-    </svg>
-  </div>
+          
+          {/* Header Card - Slate-950 */}
+          <div className="relative bg-slate-950 rounded-t-3xl p-6 sm:px-10 sm:py-8 overflow-hidden shadow-2xl border-b border-white/5">
+            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+              <svg className="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+              </svg>
+            </div>
 
-  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <div className="flex flex-col">
-      <div className="flex items-center gap-3 mb-1">
-        <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[9px] font-black tracking-widest rounded-full uppercase">
-          Verified Business
-        </span>
-        <span className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">
-          Est. 2024
-        </span>
-      </div>
-      
-      <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tighter uppercase italic leading-tight">
-        {profile.businessName || "Your Company Name"}
-      </h1>
-      
-      <p className="text-slate-100 text-xs font-bold mt-1">
-        {profile.ownerName} <span className="mx-2 opacity-30">|</span> {profile.businessType}
-      </p>
-    </div>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-8">
+              
+              {/* Logo Branding Section */}
+              <div className="relative group flex-shrink-0">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white/10 overflow-hidden bg-slate-900 shadow-2xl flex items-center justify-center relative">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Business Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white/20 text-3xl font-black">{profile.businessName?.charAt(0)}</span>
+                  )}
+                  
+                  {isEditing && (
+                    <label htmlFor="logoUpload" className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                      <input type="file" accept="image/*" onChange={handleLogoChange} className="hidden" id="logoUpload" />
+                    </label>
+                  )}
+                </div>
+                {/* Visual Glow behind logo */}
+                <div className="absolute -inset-1 bg-indigo-500/20 rounded-full blur-xl pointer-events-none"></div>
+              </div>
 
-    {/* Responsive Button: Full width on mobile, auto on desktop */}
-    <button
-      onClick={() => isEditing ? saveProfile() : setIsEditing(true)}
-      className={`w-full md:w-auto px-10 py-3 rounded-xl font-black text-[10px] tracking-[0.2em] uppercase transition-all shadow-xl transform active:scale-95 border ${
-        isEditing 
-          ? "bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500" 
-          : "bg-white text-slate-950 border-white hover:bg-slate-200"
-      }`}
-    >
-      {isEditing ? "Save Profile" : "Edit Profile"}
-    </button>
-  </div>
-</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[9px] font-black tracking-widest rounded-full uppercase">
+                    Verified Business
+                  </span>
+                  <span className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">Est. 2024</span>
+                </div>
+                
+                <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tighter uppercase italic leading-tight mb-1">
+                  {profile.businessName || "Your Company Name"}
+                </h1>
+                
+                <p className="text-slate-100 text-xs font-bold opacity-80 uppercase tracking-wide">
+                  {profile.ownerName} <span className="mx-2 text-indigo-500">|</span> {profile.businessType}
+                </p>
+              </div>
+
+              <button
+                onClick={() => isEditing ? saveProfile() : setIsEditing(true)}
+                className={`w-full md:w-auto px-10 py-3 rounded-xl font-black text-[10px] tracking-[0.2em] uppercase transition-all shadow-xl transform active:scale-95 border ${
+                  isEditing 
+                    ? "bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500" 
+                    : "bg-white text-slate-950 border-white hover:bg-slate-200"
+                }`}
+              >
+                {isEditing ? "Save Profile" : "Edit Profile"}
+              </button>
+            </div>
+          </div>
 
           <div className="bg-white rounded-b-3xl shadow-2xl border-x border-b border-slate-200 overflow-hidden">
             <div className="p-6 sm:p-10 space-y-12">
               
-              {/* Profile Sections */}
+              {/* Data Rows Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                
-                {/* Column 1: Identity & Contact */}
                 <div className="space-y-10">
                   <Section title="Legal Identity">
                     <DataRow label="GST Number" name="gstNumber" value={profile.gstNumber} isEditing={isEditing} onChange={handleChange} placeholder="23XXXXX..." />
@@ -138,7 +181,6 @@ export default function ProfilePage() {
                   </Section>
                 </div>
 
-                {/* Column 2: Location & Bank */}
                 <div className="space-y-10">
                   <Section title="Operational Address">
                     <DataRow label="Street" name="address.line1" value={profile.address.line1} isEditing={isEditing} onChange={handleChange} />
@@ -160,7 +202,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Invoice Bottom Section */}
+              {/* Bottom Section */}
               <div className="pt-10 border-t border-slate-100">
                 <Section title="Invoice Settings">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -174,10 +216,12 @@ export default function ProfilePage() {
                            value={profile.invoiceSettings.terms}
                            onChange={handleChange}
                            rows="3"
-                           className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold outline-none focus:ring-2 focus:ring-slate-900 transition-all"
+                           className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold outline-none focus:ring-2 focus:ring-slate-900 transition-all shadow-inner"
                          />
                        ) : (
-                         <p className="text-slate-700 font-semibold italic bg-slate-50 p-4 rounded-xl border border-dashed border-slate-200">{profile.invoiceSettings.terms || "No terms specified"}</p>
+                         <p className="text-slate-700 font-semibold italic bg-slate-50 p-4 rounded-xl border border-dashed border-slate-200 leading-relaxed text-sm">
+                           {profile.invoiceSettings.terms || "No terms specified"}
+                         </p>
                        )}
                     </div>
                   </div>
@@ -213,7 +257,7 @@ function DataRow({ label, name, value, isEditing, onChange, type = "text", place
             name={name} 
             value={value} 
             onChange={onChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-bold outline-none focus:ring-2 focus:ring-slate-900 transition-all"
+            className="w-full bg-slate-100 border border-slate-200 rounded-xl p-3 text-slate-900 font-bold outline-none focus:ring-2 focus:ring-slate-900 transition-all"
           >
             {options.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -224,7 +268,7 @@ function DataRow({ label, name, value, isEditing, onChange, type = "text", place
             value={value || ""}
             onChange={onChange}
             placeholder={placeholder}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-slate-900 transition-all text-slate-900 font-bold"
+            className="w-full bg-slate-100 border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-slate-900 transition-all text-slate-900 font-bold shadow-inner"
           />
         )
       ) : (
