@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
+
 import toast, { Toaster } from "react-hot-toast";
 
 export default function AdminDashboard() {
