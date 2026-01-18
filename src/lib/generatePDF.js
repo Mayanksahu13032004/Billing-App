@@ -16,13 +16,15 @@ export default async function generatePDF(bill) {
   let y;
 
   /* ================= HEADER BAR ================= */
-  page.drawRectangle({
-    x: 0,
-    y: height - 95,
-    width,
-    height: 95,
-    color: rgb(0.12, 0.18, 0.35), // Dark blue
-  });
+ /* ================= HEADER BAR ================= */
+page.drawRectangle({
+  x: 0,
+  y: height - 95,
+  width,
+  height: 95,
+  color: rgb(0.12, 0.18, 0.35), // ✅ RESTORED ORIGINAL BLUE
+});
+
 
   page.drawText(business.businessName || "Business Name", {
     x: 40,
@@ -33,7 +35,9 @@ export default async function generatePDF(bill) {
   });
 
   page.drawText(
-    `${address.line1 || ""}, ${address.city || ""}, ${address.state || ""} - ${address.pincode || ""}`,
+    `${address.line1 || ""}, ${address.city || ""}, ${address.state || ""} - ${
+      address.pincode || ""
+    }`,
     {
       x: 40,
       y: height - 65,
@@ -80,15 +84,12 @@ export default async function generatePDF(bill) {
     font: boldFont,
   });
 
-  page.drawText(
-    `Date: ${new Date(bill.date).toDateString()}`,
-    {
-      x: width - 200,
-      y: y - 26,
-      size: 11,
-      font: boldFont,
-    }
-  );
+  page.drawText(`Date: ${new Date(bill.date).toDateString()}`, {
+    x: width - 200,
+    y: y - 26,
+    size: 11,
+    font: boldFont,
+  });
 
   y -= 60;
 
@@ -117,7 +118,7 @@ export default async function generatePDF(bill) {
     y: y - rowHeight,
     width: width - 80,
     height: rowHeight,
-    color: rgb(0.85, 0.88, 0.95),
+    color: rgb(0.85, 0.85, 0.85),
   });
 
   ["S.No", "Particular", "Qty", "Rate", "Amount"].forEach((t, i) => {
@@ -139,7 +140,7 @@ export default async function generatePDF(bill) {
       width: width - 80,
       height: rowHeight,
       borderWidth: 1,
-      borderColor: rgb(0.85, 0.85, 0.85),
+      borderColor: rgb(0.8, 0.8, 0.8),
     });
 
     page.drawText(String(index + 1), {
@@ -182,8 +183,35 @@ export default async function generatePDF(bill) {
 
   y -= 30;
 
-  /* ================= TOTAL ================= */
-  page.drawText(`Grand Total: Rs. ${bill.grandTotal}`, {
+  /* ================= CALCULATIONS ================= */
+  const gstRate = bill.gstPercentage || 18;
+  const subTotal = bill.items.reduce(
+    (sum, i) => sum + Number(i.amount),
+    0
+  );
+  const gstAmount = (subTotal * gstRate) / 100;
+  const grandTotal = subTotal + gstAmount;
+
+  /* ================= TOTAL BREAKUP ================= */
+  page.drawText(`Sub Total: Rs. ${subTotal.toFixed(2)}`, {
+    x: width - 260,
+    y,
+    size: 11,
+    font,
+  });
+
+  y -= 18;
+
+  page.drawText(`GST (${gstRate}%): Rs. ${gstAmount.toFixed(2)}`, {
+    x: width - 260,
+    y,
+    size: 11,
+    font,
+  });
+
+  y -= 22;
+
+  page.drawText(`Grand Total: Rs. ${grandTotal.toFixed(2)}`, {
     x: width - 260,
     y,
     size: 14,
