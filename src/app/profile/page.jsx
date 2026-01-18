@@ -37,13 +37,39 @@ export default function ProfilePage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const handleLogoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setLogoFile(file);
-      setLogoPreview(URL.createObjectURL(file)); // Show the image immediately
-    }
+const handleLogoChange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = (event) => {
+    const img = new Image();
+    img.src = event.target.result;
+    img.onload = () => {
+      // 1. Create a Canvas
+      const canvas = document.createElement("canvas");
+      const MAX_WIDTH = 800;
+      const scaleSize = MAX_WIDTH / img.width;
+      canvas.width = MAX_WIDTH;
+      canvas.height = img.height * scaleSize;
+
+      // 2. Draw image to canvas (this compresses it)
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // 3. Convert back to a file/blob
+      canvas.toBlob((blob) => {
+        const compressedFile = new File([blob], file.name, {
+          type: "image/jpeg",
+          lastModified: Date.now(),
+        });
+        setLogoFile(compressedFile);
+        setLogoPreview(URL.createObjectURL(compressedFile));
+      }, "image/jpeg", 0.7); // 0.7 is the quality (70%)
+    };
   };
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -143,13 +169,13 @@ const saveProfile = async () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
         {/* Fixed Mobile Input: Removed capture="environment" */}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleLogoChange}
-          className="hidden"
-          id="logoUpload"
-        />
+       <input
+  type="file"
+  accept="image/*"
+  onChange={handleLogoChange}
+  className="absolute inset-0 opacity-0 cursor-pointer"
+  id="logoUpload"
+/>
       </label>
     )}
   </div>
