@@ -37,39 +37,13 @@ export default function ProfilePage() {
       .catch(() => setLoading(false));
   }, []);
 
-const handleLogoChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = (event) => {
-    const img = new Image();
-    img.src = event.target.result;
-    img.onload = () => {
-      // 1. Create a Canvas
-      const canvas = document.createElement("canvas");
-      const MAX_WIDTH = 800;
-      const scaleSize = MAX_WIDTH / img.width;
-      canvas.width = MAX_WIDTH;
-      canvas.height = img.height * scaleSize;
-
-      // 2. Draw image to canvas (this compresses it)
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // 3. Convert back to a file/blob
-      canvas.toBlob((blob) => {
-        const compressedFile = new File([blob], file.name, {
-          type: "image/jpeg",
-          lastModified: Date.now(),
-        });
-        setLogoFile(compressedFile);
-        setLogoPreview(URL.createObjectURL(compressedFile));
-      }, "image/jpeg", 0.7); // 0.7 is the quality (70%)
-    };
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file)); // Show the image immediately
+    }
   };
-};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -150,37 +124,32 @@ const saveProfile = async () => {
             <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-8">
               
               {/* Logo Branding Section */}
-           {/* ... inside your Header Card ... */}
-<div className="relative group flex-shrink-0">
-  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white/10 overflow-hidden bg-slate-900 shadow-2xl flex items-center justify-center relative">
-    {logoPreview ? (
-      <img src={logoPreview} alt="Business Logo" className="w-full h-full object-cover" />
-    ) : (
-      <span className="text-white/20 text-3xl font-black">{profile.businessName?.charAt(0)}</span>
-    )}
-    
-    {isEditing && (
-      <label 
-        htmlFor="logoUpload" 
-        className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        {/* Fixed Mobile Input: Removed capture="environment" */}
-       <input
+              <div className="relative group flex-shrink-0">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white/10 overflow-hidden bg-slate-900 shadow-2xl flex items-center justify-center relative">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Business Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white/20 text-3xl font-black">{profile.businessName?.charAt(0)}</span>
+                  )}
+                  
+                  {isEditing && (
+                    <label htmlFor="logoUpload" className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                     <input
   type="file"
   accept="image/*"
+  capture="environment"
   onChange={handleLogoChange}
   className="absolute inset-0 opacity-0 cursor-pointer"
   id="logoUpload"
 />
-      </label>
-    )}
-  </div>
-  <div className="absolute -inset-1 bg-indigo-500/20 rounded-full blur-xl pointer-events-none"></div>
-</div>
+
+                    </label>
+                  )}
+                </div>
+                {/* Visual Glow behind logo */}
+                <div className="absolute -inset-1 bg-indigo-500/20 rounded-full blur-xl pointer-events-none"></div>
+              </div>
 
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-1">
