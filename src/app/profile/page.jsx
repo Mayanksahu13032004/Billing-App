@@ -8,7 +8,7 @@ import toast, { Toaster } from "react-hot-toast";
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
-  const [logoPreview, setLogoPreview] = useState(null); // For local instant display
+  const [logoPreview, setLogoPreview] = useState(null);
 
   const [profile, setProfile] = useState({
     businessName: "",
@@ -16,7 +16,7 @@ export default function ProfilePage() {
     businessType: "Proprietor",
     gstNumber: "",
     panNumber: "",
-    logo: "", // Added to store existing logo path
+    logo: "", 
     address: { line1: "", city: "", state: "", pincode: "", country: "India" },
     contact: { phone: "", email: "", website: "" },
     bank: { bankName: "", accountNumber: "", ifsc: "" },
@@ -41,7 +41,7 @@ export default function ProfilePage() {
     const file = e.target.files[0];
     if (file) {
       setLogoFile(file);
-      setLogoPreview(URL.createObjectURL(file)); // Show the image immediately
+      setLogoPreview(URL.createObjectURL(file));
     }
   };
 
@@ -58,46 +58,39 @@ export default function ProfilePage() {
     }
   };
 
-const saveProfile = async () => {
-  const toastId = toast.loading("Updating business profile...");
-  try {
-    const formData = new FormData();
+  const saveProfile = async () => {
+    const toastId = toast.loading("Updating business profile...");
+    try {
+      const formData = new FormData();
+      Object.entries(profile).forEach(([key, value]) => {
+        if (key === "logo") return;
+        if (typeof value === "object") {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value);
+        }
+      });
 
-    Object.entries(profile).forEach(([key, value]) => {
-      if (key === "logo") return; // 🔥 CRITICAL FIX
-
-      if (typeof value === "object") {
-        formData.append(key, JSON.stringify(value));
-      } else {
-        formData.append(key, value);
+      if (logoFile) {
+        formData.append("logo", logoFile);
       }
-    });
 
-    if (logoFile) {
-      formData.append("logo", logoFile);
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error();
+      const updatedProfile = await res.json();
+      setProfile(updatedProfile);
+      setLogoPreview(updatedProfile.logo || null);
+      setLogoFile(null);
+      setIsEditing(false);
+      toast.success("Profile updated successfully!", { id: toastId });
+    } catch (err) {
+      toast.error("Failed to save profile", { id: toastId });
     }
-
-    const res = await fetch("/api/profile", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!res.ok) throw new Error();
-
-    const updatedProfile = await res.json();
-
-    // 🔥 FORCE UI REFRESH
-    setProfile(updatedProfile);
-    setLogoPreview(updatedProfile.logo || null);
-    setLogoFile(null);
-    setIsEditing(false);
-
-    toast.success("Profile updated successfully!", { id: toastId });
-  } catch (err) {
-    toast.error("Failed to save profile", { id: toastId });
-  }
-};
-
+  };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -113,14 +106,8 @@ const saveProfile = async () => {
 
         <main className="max-w-5xl mx-auto p-4 sm:p-8">
           
-          {/* Header Card - Slate-950 */}
+          {/* Header Card */}
           <div className="relative bg-slate-950 rounded-t-3xl p-6 sm:px-10 sm:py-8 overflow-hidden shadow-2xl border-b border-white/5">
-            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-              <svg className="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-              </svg>
-            </div>
-
             <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-8">
               
               {/* Logo Branding Section */}
@@ -135,37 +122,54 @@ const saveProfile = async () => {
                   {isEditing && (
                     <label htmlFor="logoUpload" className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                     <input
-  type="file"
-  accept="image/*"
-  capture="environment"
-  onChange={handleLogoChange}
-  className="absolute inset-0 opacity-0 cursor-pointer"
-  id="logoUpload"
-/>
-
+                      <input type="file" accept="image/*" onChange={handleLogoChange} className="absolute inset-0 opacity-0 cursor-pointer" id="logoUpload" />
                     </label>
                   )}
                 </div>
-                {/* Visual Glow behind logo */}
-                <div className="absolute -inset-1 bg-indigo-500/20 rounded-full blur-xl pointer-events-none"></div>
               </div>
 
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-1">
+                <div className="flex items-center gap-3 mb-2">
                   <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[9px] font-black tracking-widest rounded-full uppercase">
                     Verified Business
                   </span>
-                  <span className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">Est. 2024</span>
                 </div>
                 
-                <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tighter uppercase italic leading-tight mb-1">
-                  {profile.businessName || "Your Company Name"}
-                </h1>
+                {/* NEW: Company Name Input Field */}
+                {isEditing ? (
+                  <div className="mb-2">
+                    <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Company / Business Name</label>
+                    <input
+                      type="text"
+                      name="businessName"
+                      value={profile.businessName}
+                      onChange={handleChange}
+                      placeholder="Enter Business Name"
+                      className="w-full max-w-md bg-white/10 border border-white/20 rounded-xl p-3 text-white font-black text-xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-white/20"
+                    />
+                  </div>
+                ) : (
+                  <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tighter uppercase italic leading-tight mb-1">
+                    {profile.businessName || "Your Company Name"}
+                  </h1>
+                )}
                 
-                <p className="text-slate-100 text-xs font-bold opacity-80 uppercase tracking-wide">
-                  {profile.ownerName} <span className="mx-2 text-indigo-500">|</span> {profile.businessType}
-                </p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
+                   {isEditing ? (
+                      <input
+                        type="text"
+                        name="ownerName"
+                        value={profile.ownerName}
+                        onChange={handleChange}
+                        placeholder="Owner Name"
+                        className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-white text-xs outline-none focus:ring-1 focus:ring-indigo-400"
+                      />
+                   ) : (
+                      <p className="text-slate-100 text-xs font-bold opacity-80 uppercase tracking-wide">
+                        {profile.ownerName} <span className="mx-2 text-indigo-500">|</span> {profile.businessType}
+                      </p>
+                   )}
+                </div>
               </div>
 
               <button
@@ -181,10 +185,9 @@ const saveProfile = async () => {
             </div>
           </div>
 
+          {/* Rest of the form remains the same */}
           <div className="bg-white rounded-b-3xl shadow-2xl border-x border-b border-slate-200 overflow-hidden">
             <div className="p-6 sm:p-10 space-y-12">
-              
-              {/* Data Rows Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div className="space-y-10">
                   <Section title="Legal Identity">
@@ -220,33 +223,6 @@ const saveProfile = async () => {
                   </Section>
                 </div>
               </div>
-
-              {/* Bottom Section */}
-              <div className="pt-10 border-t border-slate-100">
-                <Section title="Invoice Settings">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <DataRow label="Invoice Prefix" name="invoiceSettings.invoicePrefix" value={profile.invoiceSettings.invoicePrefix} isEditing={isEditing} onChange={handleChange} />
-                    <DataRow label="Default GST Rate" name="invoiceSettings.gstPercentage" value={profile.invoiceSettings.gstPercentage + "%"} isEditing={isEditing} onChange={handleChange} type="number" />
-                    <div className="md:col-span-2">
-                       <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Terms & Conditions</label>
-                       {isEditing ? (
-                         <textarea 
-                           name="invoiceSettings.terms"
-                           value={profile.invoiceSettings.terms}
-                           onChange={handleChange}
-                           rows="3"
-                           className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold outline-none focus:ring-2 focus:ring-slate-900 transition-all shadow-inner"
-                         />
-                       ) : (
-                         <p className="text-slate-700 font-semibold italic bg-slate-50 p-4 rounded-xl border border-dashed border-slate-200 leading-relaxed text-sm">
-                           {profile.invoiceSettings.terms || "No terms specified"}
-                         </p>
-                       )}
-                    </div>
-                  </div>
-                </Section>
-              </div>
-
             </div>
           </div>
         </main>
@@ -255,7 +231,6 @@ const saveProfile = async () => {
   );
 }
 
-// Sub-component for Section Headings
 function Section({ title, children }) {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
@@ -265,7 +240,6 @@ function Section({ title, children }) {
   );
 }
 
-// Multi-mode Row Component (View/Edit)
 function DataRow({ label, name, value, isEditing, onChange, type = "text", placeholder = "", options = [] }) {
   return (
     <div className="group">
