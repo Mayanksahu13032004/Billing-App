@@ -9,10 +9,14 @@ export default async function generatePDF({ bill, profile }) {
   const page = pdfDoc.addPage([595, 842]); // A4
   const { width, height } = page.getSize();
 
-  // 🔽 USE PROFILE DATA INSTEAD OF bill.business
+  console.log("PDF PROFILE:", profile);
+  console.log("PDF BILL ITEMS:", bill.items);
+
+  // 🔽 SAFE PROFILE ACCESS
   const business = profile || {};
-  const address = profile.address || {};
-  const contact = profile.contact || {};
+  const address = profile?.address || {};
+  const contact = profile?.contact || {};
+
 
   let y;
 
