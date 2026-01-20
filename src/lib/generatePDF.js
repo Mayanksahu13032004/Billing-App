@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
-export default async function generatePDF(bill) {
+export default async function generatePDF({ bill, profile }) {
   const pdfDoc = await PDFDocument.create();
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -9,22 +9,21 @@ export default async function generatePDF(bill) {
   const page = pdfDoc.addPage([595, 842]); // A4
   const { width, height } = page.getSize();
 
-  const business = bill.business || {};
-  const address = business.address || {};
-  const contact = business.contact || {};
+  // 🔽 USE PROFILE DATA INSTEAD OF bill.business
+  const business = profile || {};
+  const address = profile.address || {};
+  const contact = profile.contact || {};
 
   let y;
 
   /* ================= HEADER BAR ================= */
- /* ================= HEADER BAR ================= */
-page.drawRectangle({
-  x: 0,
-  y: height - 95,
-  width,
-  height: 95,
-  color: rgb(0.12, 0.18, 0.35), // ✅ RESTORED ORIGINAL BLUE
-});
-
+  page.drawRectangle({
+    x: 0,
+    y: height - 95,
+    width,
+    height: 95,
+    color: rgb(0.12, 0.18, 0.35), // original blue
+  });
 
   page.drawText(business.businessName || "Business Name", {
     x: 40,
@@ -35,9 +34,7 @@ page.drawRectangle({
   });
 
   page.drawText(
-    `${address.line1 || ""}, ${address.city || ""}, ${address.state || ""} - ${
-      address.pincode || ""
-    }`,
+    `${address.line1 || ""}, ${address.city || ""}, ${address.state || ""} - ${address.pincode || ""}`,
     {
       x: 40,
       y: height - 65,
@@ -84,7 +81,7 @@ page.drawRectangle({
     font: boldFont,
   });
 
-  page.drawText(`Date: ${new Date(bill.date).toDateString()}`, {
+  page.drawText(`Date: ${new Date(bill.createdAt || Date.now()).toDateString()}`, {
     x: width - 200,
     y: y - 26,
     size: 11,

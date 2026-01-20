@@ -8,6 +8,8 @@ import toast, { Toaster } from "react-hot-toast";
 
 export default function CreateBill() {
   const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+
   const [items, setItems] = useState([
     { particular: "", qty: 1, rate: 0 },
   ]);
@@ -36,11 +38,14 @@ export default function CreateBill() {
     try {
       await api("/api/bills", {
         method: "POST",
-        body: JSON.stringify({ customerName, items }),
+        body: JSON.stringify({ customerName, customerEmail, items }),
+
       });
 
       toast.success("Bill Created Successfully!", { id: toastId });
       setCustomerName("");
+      setCustomerEmail("");
+
       setItems([{ particular: "", qty: 1, rate: 0 }]);
     } catch (error) {
       toast.error("Failed to create bill", { id: toastId });
@@ -74,6 +79,21 @@ export default function CreateBill() {
                   onChange={(e) => setCustomerName(e.target.value)}
                 />
               </div>
+
+
+              <div className="mb-6 sm:mb-8 group">
+  <label className="block text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
+    Customer Email (Optional)
+  </label>
+  <input
+    type="email"
+    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 outline-none focus:ring-2 focus:ring-slate-900 transition-all text-slate-900 font-bold placeholder:text-slate-300 shadow-inner"
+    placeholder="Enter customer email"
+    value={customerEmail}
+    onChange={(e) => setCustomerEmail(e.target.value)}
+  />
+</div>
+
 
               {/* Items Table Headings - Hidden on Mobile */}
               <div className="hidden sm:grid grid-cols-12 gap-4 mb-3 px-2 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
