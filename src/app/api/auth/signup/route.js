@@ -8,8 +8,8 @@ export async function POST(req) {
   await connectDB();
   const { username, password } = await req.json();
 
-  const hashed = await bcrypt.hash(password, 10);
-  await User.create({ username, password: hashed });
+  // const hashed = await bcrypt.hash(password, 10);
+  await User.create({ username, password });
 
   return NextResponse.json({ message: "User created" });
 }
